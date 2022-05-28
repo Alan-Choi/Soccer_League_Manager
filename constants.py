@@ -1,6 +1,6 @@
 from enum import Enum
 
-class Type(Enum):
+class TeamType(Enum):
     """
     Enum for the different types of teams.
     """

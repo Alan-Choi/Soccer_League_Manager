@@ -115,9 +115,47 @@ class Controller:
         conn.commit()
         conn.close()
     
-    def read_player(self, player_id: str) -> model.Player:
+    def read_player(self, player_id: str) -> list:
         db = constants.DATABASE
         conn = sqlite3.connect(db)
         cursor = conn.cursor()
         
         cursor.execute("""SELECT * FROM player WHERE uuid = ?;""", (player_id,))
+        
+        return cursor.fetchall()
+        
+    def read_team(self, team_id: str) -> list:
+        db = constants.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+        
+        cursor.execute("""SELECT * FROM team WHERE uuid = ?;""", (team_id,))
+        
+        return cursor.fetchall()
+    
+    def read_match(self, match_id: str) -> list:
+        db = constants.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+        
+        cursor.execute("""SELECT * FROM match WHERE uuid = ?;""", (match_id,))
+        
+        return cursor.fetchall()
+    
+    def read_referee(self, referee_id: str) -> list:
+        db = constants.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+        
+        cursor.execute("""SELECT * FROM referee WHERE uuid = ?;""", (referee_id,))
+        
+        return cursor.fetchall()
+    
+    def read_schedule(self, schedule_id: str) -> list:
+        db = constants.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+        
+        cursor.execute("""SELECT * FROM schedule WHERE uuid = ?;""", (schedule_id,))
+        
+        return cursor.fetchall()

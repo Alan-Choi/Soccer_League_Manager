@@ -1,6 +1,6 @@
 import datetime
 import uuid
-from constants import Type
+from constants import TeamType
 
 
 class Player:
@@ -68,7 +68,7 @@ class Player:
       
 class Team:
     
-    def __init__(self, id: str, name: str, type: 'Type'):
+    def __init__(self, id: str, name: str, type: 'TeamType'):
         self.id = id
         self.name = name
         self.type = type
