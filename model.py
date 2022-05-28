@@ -91,11 +91,11 @@ class Team:
         self.name = value
         
     @property
-    def team_type(self) -> 'Type':
+    def team_type(self) -> 'TeamType':
         return self.type
     
     @team_type.setter
-    def team_type(self, value: 'Type') -> None:
+    def team_type(self, value: 'TeamType') -> None:
         self.type = value
     
     def members(self) -> list['Player']:
