@@ -1,263 +1,244 @@
 import datetime
 import uuid
-from constants import TeamType
+from consts import TeamType
+import sqlite3
+import consts
+from player import Player
+from team import Team
+from match import Match
+from referee import Referee
+from schedule import Schedule
 
+class Model:
+    
+    __DB = consts.DATABASE
+    
+    def __init__(self, db_dir=None):
+        if db_dir is not None:
+            self.__conn = sqlite3.connect(db_dir)
+        else:
+            self.__conn = sqlite3.connect(self.__DB)
+        
+        self.cursor = self.__conn.cursor()
+        
+    
+    def __del__(self):
+        self.__conn.close()
+        
+        
+    def commit(self):
+        self.__conn.commit()
+        
+    
+    def initialize_database(self) -> None:
+        
+        self.cursor.execute("""PRAGMA foreign_keys = 1;""")
+    
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS player (
+            uuid TEXT PRIMARY KEY,
+            first_name TEXT,
+            last_name TEXT,
+            team TEXT,
+            date_of_birth TEXT,
+            picture TEXT,
+            active INTEGER,
+            FOREIGN KEY (team) REFERENCES team(name) ON DELETE SET NULL ON UPDATE CASCADE
+            );""")
+        
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS team (
+            uuid TEXT PRIMARY KEY,
+            name TEXT,
+            type TEXT,
+            active INTEGER
+            );""")
+        
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS match (
+            uuid TEXT PRIMARY KEY,
+            date TEXT,
+            team1 TEXT,
+            team2 TEXT,
+            score1 INTEGER,
+            score2 INTEGER,
+            referee TEXT,
+            FOREIGN KEY (team1) REFERENCES team(name) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (team2) REFERENCES team(name) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (referee) REFERENCES referee(name) ON DELETE SET NULL ON UPDATE CASCADE
+            );""")
+        
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS referee (
+            uuid TEXT PRIMARY KEY,
+            first_name TEXT,
+            last_name TEXT,
+            active INTEGER
+            );""")
+        
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS schedule(
+            uuid TEXT PRIMARY KEY,
+            day TEXT,
+            time TEXT
+            );""")
+    
+        self.commit()
+        
+    
+    def create_player(self, player: Player) -> None:
+        
+        self.cursor.execute("""INSERT INTO player (uuid, first_name, last_name, team, date_of_birth, active) VALUES (?, ?, ?, ?, ?, ?);""", 
+                       (player.id, player.first_name, player.last_name, player.team.id, player.date_of_birth, player.active))
+        self.commit()
+        
+    
+    def create_team(self, team: Team) -> None:
 
-class Player:
-    
-    def __init__(self, id: str, firstName: str, lastName: str, team: 'Team', date_of_birth: datetime) -> None:
-        self.id = id
-        self.firstName = firstName
-        self.lastName = lastName
-        self.team = team
-        self.date_of_birth = date_of_birth
-        self.active = True
+        self.cursor.execute("""INSERT INTO team (uuid, name, type, active) VALUES (?, ?, ?, ?);""", 
+                       (team.id, team.name, team.type.name, team.active))
+        self.commit()
         
-    @property
-    def player_id(self):
-        return self.id
     
-    @player_id.setter
-    def player_id(self, value: str) -> None:
-        self.id = value
-    
-    @property
-    def first_name(self) -> str:
-        return self.firstName
-    
-    @first_name.setter
-    def first_name(self, value: str) -> None:
-        self.firstName = value
+    def create_match(self, match: Match) -> None:
         
-    @property
-    def last_name(self) -> str:
-        return self.lastName
-    
-    @last_name.setter
-    def last_name(self, value: str) -> None:
-        self.lastName = value
-    
-    @property
-    def player_team(self) -> 'Team':
-        return self.team
-    
-    @player_team.setter
-    def player_team(self, value: 'Team') -> None:
-        self.team = value
-    
-    @property
-    def dob(self) -> datetime:
-        return self.date_of_birth
-    
-    @dob.setter
-    def dob(self, value: datetime) -> None:
-        self.date_of_birth = value
+        self.cursor.execute("""INSERT INTO match (uuid, date, team1, team2, score1, score2, referee) VALUES (?, ?, ?, ?, ?, ?, ?);""", 
+                       (match.id, match.date, match.team1.id, match.team2.id, match.score1, match.score2, match.referee.id))
+        self.commit()
         
-    def age(self) -> int:
-        today = datetime.now()
-        return today.year - self.date_of_birth.year
     
-    def activate(self) -> None:
-        self.active = True
-    
-    def deactivate(self) -> None:
-        self.active = False
-        
-    def __str__(self) -> str:
-        return f"first name: {self.firstName} last name: {self.lastName} team: {self.team} dob: {self.date_of_birth} active: {self.active}"
-      
-class Team:
-    
-    def __init__(self, id: str, name: str, type: 'TeamType'):
-        self.id = id
-        self.name = name
-        self.type = type
-        self.members: list['Player'] = []
-        
-    @property
-    def team_id(self) -> str:
-        return self.id
-    
-    @team_id.setter
-    def team_id(self, value: str) -> None:
-        self.id = value
-    
-    @property
-    def team_name(self) -> str:
-        return self.name
-    
-    @team_name.setter
-    def team_name(self, value: str) -> None:
-        self.name = value
-        
-    @property
-    def team_type(self) -> 'TeamType':
-        return self.type
-    
-    @team_type.setter
-    def team_type(self, value: 'TeamType') -> None:
-        self.type = value
-    
-    def members(self) -> list['Player']:
-        return self.members
-    
-    def add_member(self, player: 'Player') -> None:
-        self.members.append(player)
-    
-    def remove_member(self, player: 'Player') -> None:
-        self.members.remove(player)
-        
-    def num_members(self) -> int:
-        return len(self.members)
-    
-    def __str__(self) -> str:
-        return f"name: {self.name} members: {self.members}"
+    def create_referee(self, referee: Referee) -> None:
 
+        self.cursor.execute("""INSERT INTO referee (uuid, first_name, last_name, active) VALUES (?, ?, ?, ?);""", 
+                       (referee.id, referee.first_name, referee.last_name, referee.active))
+        self.commit()
+        
+    
+    def create_schedule(self, schedule: Schedule) -> None:
+ 
+        self.cursor.execute("""INSERT INTO schedule (uuid, day, time) VALUES (?, ?, ?);""", 
+                       (schedule.id, schedule.day, schedule.time))
+        self.commit()
 
-class Match:
     
-    def __init__(self, id: str, date: datetime, team1: 'Team', team2: 'Team', score1: int, score2: int, referee: 'Referee') -> None:
-        self.id = id
-        self.date = date
-        self.team1 = team1
-        self.team2 = team2
-        self.score1 = score1
-        self.score2 = score2
-        self.referee = referee
+    def read_player_by_id(self, player_id: str) -> list[Player]:
+
+        self.cursor.execute("""SELECT * FROM player WHERE uuid = ?;""", (player_id,))
         
-    @property
-    def match_id(self):
-        return self.id
-    
-    @match_id.setter
-    def match_id(self, value: str) -> None:
-        self.id = value
-    
-    @property
-    def date(self) -> datetime:
-        return self.date
-    
-    @date.setter
-    def date(self, value: datetime) -> None:
-        self.date = value
-    
-    @property
-    def team1(self) -> 'Team':
-        return self.team1
-    
-    @team1.setter
-    def team1(self, value: 'Team') -> None:
-        self.team1 = value
-    
-    @property
-    def team2(self) -> 'Team':
-        return self.team2
-    
-    @team2.setter
-    def team2(self, value: 'Team') -> None:
-        self.team2 = value
+        playerList = self.cursor.fetchall()
         
-    @property
-    def score1(self) -> int:
-        return self.score1
-    
-    @score1.setter
-    def score1(self, value: int) -> None:
-        self.score1 = value
-    
-    @property
-    def score2(self) -> int:
-        return self.score2
-    
-    @score2.setter
-    def score2(self, value: int) -> None:
-        self.score2 = value
+        players = []
+        for player in playerList:
+            players.append(Player(player[0], player[1], player[2], player[3], player[4], player[5])) 
         
-    @property
-    def ref(self) -> 'Referee':
-        return self.referee
-    
-    @ref.setter
-    def ref(self, value: 'Referee') -> None:
-        self.referee = value
-    
-    def winner(self) -> 'Team':
-        if self.score1 > self.score2:
-            return self.team1
+        # playerObject = Player(playerList[0][0], playerList[0][1], playerList[0][2], playerList[0][3], playerList[0][4], playerList[0][5])
         
-        return self.team2
-    
-    def __str__(self) -> str:
-        return f"date: {self.date} teams: {self.team1}, {self.team2} scores: {self.score1} : {self.score2} referee: {self.referee}"
-    
+        return self.cursor.fetchall()
         
-class Referee:
-    
-    def __init__(self, id: str, firstName: str, lastName: str) -> None:
-        self.id = id
-        self.firstName = firstName
-        self.lastName = lastName
-        self.active = True
-    
-    @property
-    def ref_id(self) -> str:
-        return self.id
-    
-    @ref_id.setter
-    def ref_id(self, value: str) -> None:
-        self.id = value
-    
-    @property
-    def first_name(self) -> str:
-        return self.firstName
-    
-    @first_name.setter
-    def first_name(self, value: str) -> None:
-        self.firstName = value
-    
-    @property
-    def last_name(self) -> str:
-        return self.lastName
-    
-    @last_name.setter
-    def last_name(self, value: str) -> None:
-        self.lastName = value
-    
-    def activate(self) -> None:
-        self.active = True
+    def read_team_by_id(self, team_id: str) -> list[Team]:
         
-    def deactivate(self) -> None:
-        self.active = False
+        self.cursor.execute("""SELECT * FROM team WHERE uuid = ?;""", (team_id,))
         
-    def __str__(self) -> str:
-        return f"first name: {self.firstName} last name: {self.lastName} active: {self.active}"
+        return self.cursor.fetchall()
     
-class Schedule:
-    def __init__(self, id: str, days: str, time: datetime) -> None:
-        self.id = id
-        self.days = days
-        self.time = time
-    
-    @property
-    def sched_id(self):
-        return self.id
-    
-    @sched_id.setter
-    def sched_id(self, value: str) -> None:
-        self.id = value
+    def read_match(self, match_id: str) -> list[Match]:
+        db = consts.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
         
-    @property
-    def days(self) -> str:
-        return self.days
+        cursor.execute("""SELECT * FROM match WHERE uuid = ?;""", (match_id,))
+        
+        return cursor.fetchall()
     
-    @days.setter
-    def days(self, value: str) -> None:
-        self.days = value
+    def read_referee(self, referee_id: str) -> list[Referee]:
+        db = consts.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+        
+        cursor.execute("""SELECT * FROM referee WHERE uuid = ?;""", (referee_id,))
+        
+        return cursor.fetchall()
     
-    @property
-    def time(self) -> datetime:
-        return self.time
+    def read_schedule(self, schedule_id: str) -> list[Schedule]:
+        db = consts.DATABASE
+        conn = sqlite3.connect(db)
+        cursor = conn.cursor()
+        
+        cursor.execute("""SELECT * FROM schedule WHERE uuid = ?;""", (schedule_id,))
+        
+        return cursor.fetchall()
     
-    @time.setter
-    def time(self, value: datetime) -> None:
-        self.time = value
+    def update_player(self, player: Player) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+        
+            cursor.execute("""UPDATE player SET first_name = ?, last_name = ?, team = ?, date_of_birth = ?, active = ? WHERE uuid = ?;""", 
+                        (player.first_name, player.last_name, player.team.id, player.date_of_birth, player.active, player.id,))
+            conn.commit()
+            conn.close()
+    
+    def upate_team(self, team: Team) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+        
+            cursor.execute("""UPDATE team SET name = ?, type = ?, active = ? WHERE uuid = ?;""", 
+                        (team.name, team.type.name, team.active, team.id,))
+            conn.commit()
+            conn.close()
+    
+    def update_match(self, match: Match) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+        
+            cursor.execute("""UPDATE match SET date = ?, team1 = ?, team2 = ?, score1 = ?, score2 = ?, referee = ? WHERE uuid = ?;""", 
+                        (match.date, match.team1.id, match.team2.id, match.score1, match.score2, match.referee.id, match.id,))
+            conn.commit()
+            conn.close()
+    
+    def update_referee(self, referee: Referee) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+        
+            cursor.execute("""UPDATE referee SET first_name = ?, last_name = ?, active = ? WHERE uuid = ?;""", 
+                        (referee.first_name, referee.last_name, referee.active, referee.id,))
+            conn.commit()
+            conn.close()
+    
+    def delete_player(self, id: str) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""DELETE FROM player WHERE uuid = ?;""", (id,))
+            
+            conn.commit()
+            conn.close()
+    
+    def delete_team(self, id: str) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""DELETE FROM team WHERE uuid = ?;""", (id,))
+            
+            conn.commit()
+            conn.close()
+    
+    def delete_match(self, id: str) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""DELETE FROM match WHERE uuid = ?;""", (id,))
+            
+            conn.commit()
+            conn.close()
+    
+    def delete_referee(self, id: str) -> None:
+        db = consts.DATABASE
+        with sqlite3.connect(db) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""DELETE FROM referee WHERE uuid = ?;""", (id,))
+            
+            conn.commit()
+            conn.close()
