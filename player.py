@@ -1,7 +1,17 @@
 import datetime
+from uuid import uuid4
 import team
 
 class Player:
+    
+    # def __init__(self):
+    #     self.id = '12345'
+    #     self.firstName = 'John'
+    #     self.lastName = 'Doe'
+    #     self.team = 'Team1'
+    #     self.date_of_birth = datetime.date.today()
+    #     self.picture = 'picture.png'
+    #     self.active = True
         
     def __init__(self, id: str, firstName: str, lastName: str, team: str, date_of_birth: datetime, picture: str, active: bool = True) -> None:
         self.id = id
@@ -37,11 +47,11 @@ class Player:
         self.lastName = value
     
     @property
-    def player_team(self) -> 'team.Team':
+    def player_team(self) -> 'team.Team.team_name':
         return self.team
     
     @player_team.setter
-    def player_team(self, value: 'team.Team') -> None:
+    def player_team(self, value: 'team.Team.team_name') -> None:
         self.team = value
     
     @property
@@ -53,20 +63,24 @@ class Player:
         self.date_of_birth = value
         
     @property
-    def picture(self) -> str:
+    def player_picture(self) -> str:
         return self.picture
     
-    @picture.setter
-    def picture(self, value: str) -> None:
+    @player_picture.setter
+    def player_picture(self, value: str) -> None:
         self.picture = value
         
     @property
-    def active(self) -> bool:
+    def player_active(self) -> bool:
         return self.active
+    
+    @player_active.setter
+    def player_active(self, value: bool) -> None:
+        self.active = value
         
     def age(self) -> int:
         today = datetime.date.today()
-        return today.year - self.dob.year - ((today.month, today.day) < (self.dob.month, self.dob.day))
+        return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
     
     def activate(self) -> None:
         self.active = True

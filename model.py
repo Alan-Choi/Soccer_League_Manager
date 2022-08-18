@@ -14,12 +14,13 @@ class Model:
     __DB = consts.DATABASE
     
     def __init__(self, db_dir=None):
-        if db_dir is not None:
+        if db_dir:
             self.__conn = sqlite3.connect(db_dir)
         else:
             self.__conn = sqlite3.connect(self.__DB)
         
         self.cursor = self.__conn.cursor()
+        # self.initialize_database()
         
     
     def __del__(self):
@@ -42,7 +43,7 @@ class Model:
             date_of_birth TEXT,
             picture TEXT,
             active INTEGER,
-            FOREIGN KEY (team) REFERENCES team(name) ON DELETE SET NULL ON UPDATE CASCADE
+            FOREIGN KEY (team) REFERENCES team(uuid) ON DELETE SET NULL ON UPDATE CASCADE
             );""")
         
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS team (
@@ -60,9 +61,9 @@ class Model:
             score1 INTEGER,
             score2 INTEGER,
             referee TEXT,
-            FOREIGN KEY (team1) REFERENCES team(name) ON DELETE SET NULL ON UPDATE CASCADE,
-            FOREIGN KEY (team2) REFERENCES team(name) ON DELETE SET NULL ON UPDATE CASCADE,
-            FOREIGN KEY (referee) REFERENCES referee(name) ON DELETE SET NULL ON UPDATE CASCADE
+            FOREIGN KEY (team1) REFERENCES team(uuid) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (team2) REFERENCES team(uuid) ON DELETE SET NULL ON UPDATE CASCADE,
+            FOREIGN KEY (referee) REFERENCES referee(uuid) ON DELETE SET NULL ON UPDATE CASCADE
             );""")
         
         self.cursor.execute("""CREATE TABLE IF NOT EXISTS referee (
@@ -83,8 +84,8 @@ class Model:
     
     def create_player(self, player: Player) -> None:
         
-        self.cursor.execute("""INSERT INTO player (uuid, first_name, last_name, team, date_of_birth, active) VALUES (?, ?, ?, ?, ?, ?);""", 
-                       (player.id, player.first_name, player.last_name, player.team.id, player.date_of_birth, player.active))
+        self.cursor.execute("""INSERT INTO player (uuid, first_name, last_name, team, date_of_birth, picture, active) VALUES (?, ?, ?, ?, ?, ?, ?);""", 
+                       (player.id, player.first_name, player.last_name, player.team, player.date_of_birth, player.picture, player.active))
         self.commit()
         
     
@@ -115,6 +116,16 @@ class Model:
                        (schedule.id, schedule.day, schedule.time))
         self.commit()
 
+    def read_players(self) -> list[Player]:
+        self.cursor.execute("""SELECT * FROM player;""")
+        
+        playerList = self.cursor.fetchall()
+        
+        players = []
+        for player in playerList:
+            players.append(Player(player[0], player[1], player[2], player[3], player[4], player[5])) 
+        
+        return players
     
     def read_player_by_id(self, player_id: str) -> list[Player]:
 
@@ -125,10 +136,8 @@ class Model:
         players = []
         for player in playerList:
             players.append(Player(player[0], player[1], player[2], player[3], player[4], player[5])) 
-        
-        # playerObject = Player(playerList[0][0], playerList[0][1], playerList[0][2], playerList[0][3], playerList[0][4], playerList[0][5])
-        
-        return self.cursor.fetchall()
+                
+        return players
         
     def read_team_by_id(self, team_id: str) -> list[Team]:
         
@@ -136,7 +145,7 @@ class Model:
         
         return self.cursor.fetchall()
     
-    def read_match(self, match_id: str) -> list[Match]:
+    def read_match_by_id(self, match_id: str) -> list[Match]:
         db = consts.DATABASE
         conn = sqlite3.connect(db)
         cursor = conn.cursor()

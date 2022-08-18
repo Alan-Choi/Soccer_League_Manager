@@ -9,4 +9,4 @@ class TeamType(Enum):
     BOYS = 3
     GIRLS = 4
 
-DATABASE = 'database.db'
+DATABASE = './data/database.db'

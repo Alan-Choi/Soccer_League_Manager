@@ -3,11 +3,11 @@ from consts import TeamType
 
 class Team:
     
-    def __init__(self, id: str, name: str, type: TeamType, active: bool = True) -> None:
+    def __init__(self, id: str, name: str, type: TeamType, members: list['player.Player'] = [], active: bool = True) -> None:
         self.id = id
         self.name = name
         self.type = type
-        self.members: list[player.Player] = []
+        self.members = members
         self.active = active
         
     @property
@@ -35,8 +35,12 @@ class Team:
         self.type = value
     
     @property
-    def members(self) -> list['player.Player']:
+    def team_members(self) -> list['player.Player']:
         return self.members
+    
+    @team_members.setter
+    def team_members(self, value) -> None:
+        self.members = value
     
     def add_member(self, player: 'player.Player') -> None:
         self.members.append(player)
